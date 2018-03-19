@@ -4,6 +4,10 @@
 
 % Modelo do Robo
 
+%% Parametros do Robo
+vmax = 0.65;
+b = 0.23;
+
 %% Parametros da funcao de transferencia
 n = 0.99;
 R = 1.5506;
