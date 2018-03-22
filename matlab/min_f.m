@@ -4,13 +4,13 @@
 
 % Funcao que retorna o no com menor custo
 
-function f = min_f(nodes)
+function node = min_f(nodes)
 
-   f = 10000;   % f inicial bem grande
+   node = nodes(1);
 
-   for i = nodes
-      if f > i.f
-         f = i.f;
+   for i = nodes(2:end)
+      if node.f > i.f
+         node = i;
       end
    end
 
