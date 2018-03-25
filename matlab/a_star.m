@@ -4,8 +4,6 @@
 
 % Algoritmo A*
 
-INF = 100000;
-
 %% Struct do No
 % node.x = x
 % node.y = y
