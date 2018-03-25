@@ -7,6 +7,12 @@
 
 function neighbor_nodes = neighbor_list(current_node)
 
+   % Valor 'infinito'
+   INF = 100000;
+   % Limites do grid de celulas
+   GRID_MIN = 1;
+   GRID_MAX = 5;
+
    neighbor_nodes = [];
 
    % Vizinho de cima

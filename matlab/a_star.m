@@ -13,6 +13,12 @@
 
 function path_nodes = a_star(start_node, goal_node)
 
+   % Valor 'infinito'
+   INF = 100000;
+   % Limites do grid de celulas
+   GRID_MIN = 1;
+   GRID_MAX = 5;
+
    closed_set = [];
    open_set = [start_node];
    path_nodes = [];
@@ -26,7 +32,9 @@ function path_nodes = a_star(start_node, goal_node)
       current_node = min_f(open_set);
 
       if isequaln(current_node, goal_node)
-         return = reconstruct_path(current_node);
+         path_nodes = reconstruct_path(current_node);
+         return
+      end
 
       % Remove current_node de open_set
       n = 1;
@@ -84,7 +92,7 @@ function path_nodes = a_star(start_node, goal_node)
 
    end  % while ~isempty(open_set) 
    % Retorna falha, caso a lista aberta fique vazia antes de se atingir o alvo
-   return [];
+   path_nodes = [];
+   return
 
 end  % a_star function
-
