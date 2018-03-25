@@ -31,7 +31,7 @@ function path_nodes = a_star(start_node, goal_node)
 
       current_node = min_f(open_set);
 
-      if isequaln(current_node, goal_node)
+      if (current_node.x == goal_node.x) && (current_node.y == goal_node.y)
          path_nodes = reconstruct_path(current_node);
          return
       end
@@ -75,7 +75,7 @@ function path_nodes = a_star(start_node, goal_node)
             end
          end
          if ~is_in_open_set
-            open_set = [open_set neighbor]
+            open_set = [open_set neighbor];
          end
 
          % Compara o custo previo do vizinho com o custo do caminho atual.

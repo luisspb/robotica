@@ -9,7 +9,7 @@ function path_nodes = rescontruct_path(node)
    path_nodes = [];
    path_nodes = [path_nodes node];
 
-   while node.camefrom
+   while ~isempty(node.camefrom)
       node = node.camefrom;
       path_nodes = [path_nodes node];
    end
