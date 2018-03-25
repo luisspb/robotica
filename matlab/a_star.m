@@ -19,6 +19,7 @@ function path_nodes = a_star(start_node, goal_node)
    open_set = [start_node];
    path_nodes = [];
 
+   start_node.camefrom = 0;
    start_node.g = 0;
    start_node.f = start_node.g + manhattan_distance(start_node, goal_node);
 
