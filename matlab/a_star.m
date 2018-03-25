@@ -56,7 +56,7 @@ function path_nodes = a_star(start_node, goal_node)
                is_in_closed_set = 1;
             end
          end
-         if is_in_closed_set == 1
+         if is_in_closed_set
             continue
          end
 
@@ -68,15 +68,25 @@ function path_nodes = a_star(start_node, goal_node)
                is_in_open_set = 1;
             end
          end
-         if is_in_open_set == 0
+         if ~is_in_open_set
             open_set = [open_set neighbor]
          end
 
-      end
+         % Compara o custo previo do vizinho com o custo do caminho atual.
+         % Se o custo atual for menor do que o custo ja armazenado no vizinho,
+         % foi encontrado um melhor caminho e deve registra-lo
+         tentative_g = current_node.g + distance_between(current_node, neighbor);
+         if tentative_g < neighbor.g
+            neighbor.camefrom = current_node;
+            neighbor.g = tentative_g;
+            neighbor.f = neighbor.g + manhattan_distance(current_node, goal_node);
+         end
 
-   end
+      end  % for neighbor = neighbor_nodes
+
+   end  % while ~isempty(open_set) 
    % Retorna falha, caso a lista aberta fique vazia antes de se atingir o alvo
    return [];
 
-end
+end  % a_star function
 
