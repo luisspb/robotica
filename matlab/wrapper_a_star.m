@@ -27,8 +27,12 @@ function [x, y] = wrapper_a_star(grid, start, goal)
 
    path_nodes = a_star(start_node, goal_node);
 
+   x = zeros(1,20);
+   y = zeros(1,20);
+   j = 1;
    for i = path_nodes
-      x = i.x;
-      y = i.y;
+      x(j) = i.x;
+      y(j) = i.y;
+      j = j + 1;
    end
 end

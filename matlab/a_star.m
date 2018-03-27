@@ -9,7 +9,7 @@
 % node.y = y
 % node.g = INF (valor default = infinito)
 % node.f = INF (valor default = infinito)
-% node.camefrom = NULL
+% node.camefrom = EMPTY
 
 function path_nodes = a_star(start_node, goal_node)
 
@@ -23,7 +23,7 @@ function path_nodes = a_star(start_node, goal_node)
    open_set = [start_node];
    path_nodes = [];
 
-   start_node.camefrom = 0;
+   start_node.camefrom = [];
    start_node.g = 0;
    start_node.f = start_node.g + manhattan_distance(start_node, goal_node);
 
