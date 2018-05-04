@@ -4,7 +4,7 @@ function position = sample_motion_model_velocity(Ut,Xt1)
 	w = Ut(2);
 	x = Xt1(1);
 	y = Xt1(2);
-	teta = Xt1(3);
+	teta = (Xt1(3)/180)*pi; % Passando pra radianos
     
     %alfa 1 to 6 são paramentros de erro de movimento especifico do robo.
     alfa1 = 0.2; alfa2 = 0.2; alfa3 = 0.2; alfa4 = 0.2; alfa5 = 0.2; alfa6 = 0.2;
