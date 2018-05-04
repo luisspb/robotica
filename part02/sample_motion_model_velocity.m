@@ -9,7 +9,7 @@ function position = sample_motion_model_velocity(Ut,Xt1)
     %alfa 1 to 6 são paramentros de erro de movimento especifico do robo.
     alfa1 = 0.2; alfa2 = 0.2; alfa3 = 0.2; alfa4 = 0.2; alfa5 = 0.2; alfa6 = 0.2;
     %DeltaT duração fixa de tempo.
-    DeltaT = 3.0;
+    DeltaT = 1.0;
 	%Não tenho absoluta cereza desses valores acima
 	
 	vc = v + sample(alfa1*abs(v) + alfa2*abs(w));
@@ -19,6 +19,7 @@ function position = sample_motion_model_velocity(Ut,Xt1)
 	xl = x - (vc/wc)*sin(teta) + (vc/wc)*sin(teta + wc*DeltaT);
 	yl = y + (vc/wc)*cos(teta) - (vc/wc)*cos(teta + wc*DeltaT);    
 	tetaL = teta + wc*DeltaT + gamac*DeltaT;
+	tetaL = (tetaL*180)/pi; % Convertendo para graus
 	
 	xt = [xl,yl,tetaL];	
 	position = xt;
