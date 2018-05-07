@@ -1,0 +1,4 @@
+1. Implement a Velocity Motion Model and plot its distribution along a given path. (1/4)
+2. Given a figure, create an occupancy grid map – see ImageToBinaryOccupancyGridExampleExample. (2/4)
+3. Implement UKF Localization. Put a robot to wonder in a given map with objects while localizing itself. Show the problem with and without UKF. (3/4)
+4. Implement AMCL Localization. Put a robot to wonder in a given map with objects while localizing itself. OBS.: Using SCRIPT (the MCL MatLab example uses classes. I do not want that!). (4/4)
