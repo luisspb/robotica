@@ -227,6 +227,38 @@ visualizationHelper = myHelperAMCLVisualization(map);
 wanderHelper = ...
     ExampleHelperAMCLWanderer(laserSub, sensorTransform, velPub, velMsg);
 
+    % Setup
+   randomState = rng;
+   amclSeed = double(randomState.Seed);
+   amclMCLObj = robotics.algs.internal.MonteCarloLocalization(amclSeed);
+
+   %initialize Initialize by assigning all data to internal object
+   amclMCLObj.setUpdateThresholds(amclUpdateThresholds(1), ...
+        amclUpdateThresholds(2), amclUpdateThresholds(3));
+   amclMCLObj.setResamplingInterval(amclResamplingInterval);
+
+   % Set sensor model
+   robotics.algs.internal.AccessMCL.setSensorModel( ...
+        amclMCLObj, amclSensorModel);
+
+   % Set motion model
+   amclMCLObj.setMotionModel(amclMotionModel.Noise);
+
+   % Initialize particle filter
+   amclMCLObj.initializePf(amclParticleLimits(1), ...
+        amclParticleLimits(2), amclRecoveryAlphaSlow, ...
+        amclRecoveryAlphaFast, amclKLDError, amclKLDZ);
+
+
+   if amclGlobalLocalization
+        % Global initialization
+        amclMCLObj.globalLocalization();
+   else
+        % Initialize with pose and covariance
+        amclMCLObj.setInitialPose(amclInitialPose, ...
+            amclInitialCovariance);
+   end
+
 %% Localization Procedure
 % The AMCL algorithm is updated with odometry and sensor readings at each
 % time step when the robot is moving around.
@@ -265,38 +297,6 @@ while i < numUpdates
     end
     validateattributes(pose, {'double'}, ...
        {'vector', 'numel', 3, 'real', 'finite'}, 'step', 'pose');
-
-    % Setup
-    randomState = rng;
-    amclSeed = double(randomState.Seed);
-    amclMCLObj = robotics.algs.internal.MonteCarloLocalization(amclSeed);
-
-    %initialize Initialize by assigning all data to internal object
-   amclMCLObj.setUpdateThresholds(amclUpdateThresholds(1), ...
-        amclUpdateThresholds(2), amclUpdateThresholds(3));
-   amclMCLObj.setResamplingInterval(amclResamplingInterval);
-
-   % Set sensor model
-   robotics.algs.internal.AccessMCL.setSensorModel( ...
-        amclMCLObj, amclSensorModel);
-
-   % Set motion model
-   amclMCLObj.setMotionModel(amclMotionModel.Noise);
-
-   % Initialize particle filter
-   amclMCLObj.initializePf(amclParticleLimits(1), ...
-        amclParticleLimits(2), amclRecoveryAlphaSlow, ...
-        amclRecoveryAlphaFast, amclKLDError, amclKLDZ);
-
-
-   if amclGlobalLocalization
-        % Global initialization
-        amclMCLObj.globalLocalization();
-   else
-        % Initialize with pose and covariance
-        amclMCLObj.setInitialPose(amclInitialPose, ...
-            amclInitialCovariance);
-   end
 
     % Combined predict, correct and resampling step
     numranges = length(scan.Ranges);
