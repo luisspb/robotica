@@ -54,6 +54,9 @@
 % '172.28.195.100' with the IP address of your TurtleBot in virtual
 % machine.
 %
+
+clear
+
 ipaddress = '172.16.134.130';
 %
 %%
@@ -214,7 +217,7 @@ amclInitialCovariance = eye(3)*0.5;
 %% Setup Helper for Visualization and Driving TurtleBot.
 % Setup ExampleHelperAMCLVisualization to plot the map and update robot's
 % estimated pose, particles, and laser scan readings on the map.
-visualizationHelper = ExampleHelperAMCLVisualization(map);
+visualizationHelper = myHelperAMCLVisualization(map);
 
 %%
 % Robot motion is essential for the AMCL algorithm. In this example, we drive
@@ -232,7 +235,7 @@ wanderHelper = ...
 % In this example we will run |numUpdates| AMCL updates. If the robot
 % doesn't converge to the correct robot pose, consider using a larger
 % |numUpdates|.
-numUpdates = 20;
+numUpdates = 60;
 i = 0;
 while i < numUpdates
     % Receive laser scan and odometry message.
@@ -310,8 +313,8 @@ while i < numUpdates
     % Plot the robot's estimated pose, particles and laser scans on the map.
     if isUpdated
         i = i + 1;
-        %plotStep(visualizationHelper, amcl, estimatedPose, scan, i)
-    end
+        plotStep(visualizationHelper, amclMCLObj, amclSensorModel, estimatedPose, scan, i)
+     end
 
 end
 
@@ -387,5 +390,3 @@ rosshutdown
 %% References
 % [1] S. Thrun, W. Burgard and D. Fox, Probabilistic Robotics.
 % Cambridge, MA: MIT Press, 2005.
-
-displayEndOfDemoMessage(mfilename)
