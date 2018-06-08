@@ -55,6 +55,7 @@
 % machine.
 %
 
+rosshutdown
 clear
 
 ipaddress = '172.16.205.128';
@@ -68,6 +69,7 @@ rosinit(ipaddress);
 %map = createOccupancyGrid ('laser.png');
 
 filePath = fullfile(fileparts(which('TurtleBotMonteCarloLocalizationExample')),'data','officemap.mat');
+load(filePath);
 
 show(map);
 
