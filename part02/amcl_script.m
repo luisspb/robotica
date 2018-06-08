@@ -65,14 +65,11 @@ rosinit(ipaddress);
 %% Gera o Binary Occupancy Grid do espaco modelado do LaSER
 
 %% Load the Map of the Simulation World
-map = createOccupancyGrid ('laser.png');
+%map = createOccupancyGrid ('laser.png');
+
+filePath = fullfile(fileparts(which('TurtleBotMonteCarloLocalizationExample')),'data','officemap.mat');
 
 show(map);
-%%
-% A binary occupancy map of the cluttered environment:
-%
-% <<office_bog.png>>
-%
 
 %% Setup the Laser Sensor Model and TurtleBot Motion Model
 % TurtleBot can be modeled as a differential drive robot and its motion can
