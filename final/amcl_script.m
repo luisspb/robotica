@@ -1,101 +1,33 @@
 %% Localize TurtleBot Using Monte Carlo Localization
-%% Introduction
-% This example demonstrates an application of the Monte Carlo
-% Localization (MCL) algorithm on TurtleBot(R) in simulated Gazebo(R)
-% environment.
-%
-% Monte Carlo Localization (MCL) is an algorithm to localize a robot using
-% a particle filter. The algorithm requires a known map and the task is to
-% estimate the pose (position and orientation) of the robot within the map
-% based on the motion and sensing of the robot. The algorithm starts with
-% an initial belief of the robot pose's probability distribution, which is
-% represented by particles distributed according to such belief.
-% These particles are propagated following the robot's motion model each
-% time the robot's pose changes. Upon receiving new sensor readings, each
-% particle will evaluate its accuracy by checking how likely it would
-% receive such sensor readings at its current pose. Next the algorithm will
-% redistribute (resample) particles to bias particles that are more
-% accurate. Keep iterating these moving, sensing and resampling steps, and all
-% particles should converge to a single cluster near the true pose of
-% robot if localization is successful.
-%
-% Adaptive Monte Carlo Localization (AMCL) is the variant of MCL
-% implemented in
-% |<docid:robotics_ref.bu31hfz-1 robotics.MonteCarloLocalization>|.
-% AMCL dynamically adjusts the number of particles based on KL-distance [1]
-% to ensure that the particle distribution converge to the true distribution
-% of robot state based on all past sensor and motion measurements with
-% high probability.
-%
-% The current MATLAB(R) AMCL implementation can be applied to any
-% differential drive robot equipped with a range finder.
-%
-% _The Gazebo TurtleBot simulation must be running for this example to work._
-%
-% Prerequisites: <docid:robotics_examples.example-GettingStartedWithGazeboExample Getting Started With Gazebo Example>,
-% <docid:robotics_examples.example-ROSTransformationTreeExample Accessing the tf Transformation Tree in ROS Example>,
-% <docid:robotics_examples.example-ROSPublishAndSubscribeExample Exchanging Data with ROS Publishers and Subscribers Example>,
-%
-% Note: Starting in R2016b, instead of using the step method to perform the
-% operation defined by the System object, you can call the object with
-% arguments, as if it were a function. For example, |y = step(obj,x)| and
-% |y = obj(x)| perform equivalent operations.
-
-% Copyright 2015-2017 The MathWorks, Inc.
-
-%% Connect to the TurtleBot in Gazebo
-% First, spawn a simulated TurtleBot inside an office environment
-% in a virtual machine by following steps in the <docid:robotics_examples.example-GettingStartedWithGazeboExample Getting Started With Gazebo Example>
-% to launch the |Gazebo TurtleBot World| from the desktop.
-%
-% In your MATLAB instance on the host computer, run the following commands
-% to initialize ROS global node in MATLAB and connect to the ROS master
-% in the virtual machine through its IP address |ipaddress|. Replace
-% '172.28.195.100' with the IP address of your TurtleBot in virtual
-% machine.
-%
 
 rosshutdown
 clear
 
 ipaddress = '172.16.205.128';
-%
-%%
 rosinit(ipaddress);
+
+%gazebo = ExampleHelperGazeboCommunicator();
+%models = getSpawnedModels(gazebo);
+%turtlebot = ExampleHelperGazeboSpawnedModel('mobile_base',gazebo);
+%[position, orientation] = getState(turtlebot)
 
 %% Gera o Binary Occupancy Grid do espaco modelado do LaSER
 
 %% Load the Map of the Simulation World
-%map = createOccupancyGrid ('laser.png');
+map = createOccupancyGrid ('laser.png');
 
-filePath = fullfile(fileparts(which('TurtleBotMonteCarloLocalizationExample')),'data','officemap.mat');
-load(filePath);
+%filePath = fullfile(fileparts(which('TurtleBotMonteCarloLocalizationExample')),'data','officemap.mat');
+%load(filePath);
 
-show(map);
+%show(map);
 
 %% Setup the Laser Sensor Model and TurtleBot Motion Model
-% TurtleBot can be modeled as a differential drive robot and its motion can
-% be estimated using odometry data.
-% The |Noise| property defines the uncertainty in robot's rotational and
-% linear motion.
-% Increasing the |odometryModel.Noise| property will allow more spread when
-% propagating particles using odometry measurements.
-% Please refer to |<docid:robotics_ref.bu359h6-1 robotics.OdometryMotionModel>| for property details.
 odometryModel = robotics.OdometryMotionModel;
 odometryModel.Noise = [0.2 0.2 0.2 0.2];
 
 %%
 % The sensor on TurtleBot is a simulated range finder converted from
-% Kinect readings. The likelihood field method is used to compute the
-% probability of perceiving a set of measurements by comparing the end
-% points of the range finder measurements to the occupancy map. If the
-% end points match the occupied points in occupancy map, the
-% probability of perceiving such measurements is high.
-% The sensor model should be tuned to match the actual sensor property to
-% achieve better test results.
-% The property |SensorLimits| defines the minimum and maximum range of sensor readings.
-% The property |Map| defines the occupancy map used for computing likelihood field.
-% Please refer to |<docid:robotics_ref.bu31hrp-1 robotics.LikelihoodFieldSensorModel>| for property details.
+% Kinect readings.
 rangeFinderModel = robotics.LikelihoodFieldSensorModel;
 rangeFinderModel.SensorLimits = [0.45 8];
 rangeFinderModel.Map = map;
