@@ -15,6 +15,9 @@ rosinit(ipaddress);
 map = createOccupancyGrid ('laser.png');
 %show(map);
 
+% Gerador de caminho: Algoritmo A estrela
+waypoints = wrapper_a_star(start, goal, map.GridSize);
+
 % Setup the Laser Sensor Model and TurtleBot Motion Model
 odometryModel = robotics.OdometryMotionModel;
 odometryModel.Noise = [0.2 0.2 0.2 0.2];
@@ -78,10 +81,6 @@ amclInitialCovariance = eye(3)*0.5;
 
 % Setup Helper for Visualization and Driving TurtleBot.
 visualizationHelper = myHelperAMCLVisualization(map);
-
-%
-wanderHelper = ...
-    ExampleHelperAMCLWanderer(laserSub, sensorTransform, velPub, velMsg);
 
 % Setup
 randomState = rng;
@@ -155,7 +154,10 @@ while i < numUpdates
          robotics.algs.internal.AccessMCL.getHypothesis(amclMCLObj);
 
     % Drive robot to next pose.
-    wander(wanderHelper);
+    velMsg.Linear.X = 0.3;
+    velMsg.Angular.Z = 0.3;
+    send(velPub,velMsg);
+
 
     % Plot the robot's estimated pose, particles and laser scans on the map.
     if isUpdated
@@ -164,6 +166,10 @@ while i < numUpdates
      end
 
 end
+
+velMsg.Linear.X = 0;
+velMsg.Angular.Z = 0;
+send(velPub,velMsg);
 
 % Stop the TurtleBot and Shutdown ROS in MATLAB
 rosshutdown
