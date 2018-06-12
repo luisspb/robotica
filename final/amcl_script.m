@@ -3,20 +3,37 @@
 rosshutdown
 clear
 
+start = [2 2];
+goal = [4 5];
+
 ipaddress = '172.16.205.128';
 rosinit(ipaddress);
 
-%gazebo = ExampleHelperGazeboCommunicator();
-%models = getSpawnedModels(gazebo);
-%turtlebot = ExampleHelperGazeboSpawnedModel('mobile_base',gazebo);
-%[position, orientation] = getState(turtlebot)
+% gazebo = ExampleHelperGazeboCommunicator();
+% models = getSpawnedModels(gazebo);
+% turtlebot = ExampleHelperGazeboSpawnedModel('mobile_base',gazebo);
+% [position, orientation] = getState(turtlebot)
 
 % Gera o Binary Occupancy Grid do espaco modelado do LaSER
-map = createOccupancyGrid ('laser.png');
+map = createOccupancyGrid ('laser2.png');
 %show(map);
 
 % Gerador de caminho: Algoritmo A estrela
 waypoints = wrapper_a_star(start, goal, map.GridSize);
+% Converte os waypoints de coordenadas de grid para coordenadas x e y
+waypoints = waypoints / map.Resolution;
+% Calcula os angulos (em radianos)
+tethas = atan (waypoints(:, 2) ./ waypoints(:, 1));
+% Acrescenta no vetor de waypoints
+waypoints = [waypoints tethas];
+% Index of active waypoint
+widx = 2;
+% Set a distance metric for reaching a waypoint
+distThreshold = 0.3;
+
+% Cinematica inversa
+linvels = sqrt((diff(waypoints(:, 1))).^2 + (diff(waypoints(:, 2))).^2);
+angvels = diff(waypoints(:, 3));
 
 % Setup the Laser Sensor Model and TurtleBot Motion Model
 odometryModel = robotics.OdometryMotionModel;
@@ -49,6 +66,7 @@ odomSub = rossubscriber('odom');
 % Create ROS publisher for sending out velocity commands to TurtleBot.
 [velPub,velMsg] = ...
     rospublisher('/mobile_base/commands/velocity','geometry_msgs/Twist');
+pause(2); % Wait to ensure publisher and subscriber are registered
 
 %% Initialize AMCL Algorithm
 amclMCLObj = robotics.algs.internal.MonteCarloLocalization.empty;
@@ -112,10 +130,9 @@ else
     amclInitialCovariance);
 end
 
-%% Localization Procedure
-numUpdates = 60;
 i = 0;
-while i < numUpdates
+%% Localization Procedure
+while 1
     % Receive laser scan and odometry message.
     scanMsg = receive(laserSub);
     odompose = odomSub.LatestMessage;
@@ -153,16 +170,33 @@ while i < numUpdates
     [estimatedPose, estimatedCovariance] = ...
          robotics.algs.internal.AccessMCL.getHypothesis(amclMCLObj);
 
-    % Drive robot to next pose.
-    velMsg.Linear.X = 0.3;
-    velMsg.Angular.Z = 0.3;
-    send(velPub,velMsg);
+    % Get x, y and theta from pose estimation
+    x = estimatedPose(1);
+    y = estimatedPose(2);
+    theta = estimatedPose(3);  % In radians!
 
+    % Calculate the distance to the current waypoint
+    dist = sqrt((x - waypoints(widx, 1))^2 + (y - waypoints(widx, 2))^2);
+
+    % Evaluate what to do next based on the distance to the waypoint.
+    if (dist <= distThreshold)
+        if (widx < (size(waypoints, 1) - 1))
+            widx = widx + 1
+        else
+            break;
+        end
+    else
+        % Populate the twist message
+        velMsg.Linear.X = linvels(widx-1);
+        velMsg.Angular.Z = angvels(widx-1);
+        % Publish
+        send(velPub,velMsg);
+    end
 
     % Plot the robot's estimated pose, particles and laser scans on the map.
     if isUpdated
-        i = i + 1;
         plotStep(visualizationHelper, amclMCLObj, amclSensorModel, estimatedPose, scan, i)
+        i = i + 1;
      end
 
 end
