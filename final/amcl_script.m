@@ -5,7 +5,7 @@ clear
 
 % Start and goal in meters
 start = [1 1];
-goal = [4 1];
+goal = [5 5];
 
 % Gera o Binary Occupancy Grid do espaco modelado do LaSER
 map = createOccupancyGrid ('laser2.png', 2);
@@ -22,14 +22,15 @@ waypoints = waypoints / map.Resolution;
 % Calcula os angulos (em radianos)
 tethas = [0; atan((diff(waypoints(:, 2))) ./ (diff(waypoints(:, 1))))];
 % Acrescenta no vetor de waypoints
-waypoints = [waypoints tethas];
+% waypoints = [waypoints tethas];
+path = waypoints;
 % Index of active waypoint
 widx = 2;
 % Set a distance metric for reaching a waypoint
 distThreshold = 0.3;
 
 % Seta IP do ROS Master e inicia conexao
-ipaddress = '172.16.205.129';
+ipaddress = '192.168.43.148';
 rosinit(ipaddress);
 
 % gazebo = ExampleHelperGazeboCommunicator();
@@ -95,7 +96,7 @@ amclResamplingInterval = 1;
 % Configure AMCL Object for Localization with Initial Pose Estimate.
 amclParticleLimits = [500 5000];
 amclGlobalLocalization = false;
-amclInitialPose = ExampleHelperAMCLGazeboTruePose();
+amclInitialPose = [1 1 0];
 amclInitialCovariance = eye(3)*0.5;
 
 % Setup Helper for Visualization and Driving TurtleBot.
@@ -131,9 +132,50 @@ else
     amclInitialCovariance);
 end
 
+% Set the current location and the goal location of the robot as defined by the path
+robotCurrentLocation = path(1,:);
+robotGoal = path(end,:);
+
+%%
+initialOrientation = 0;
+
+%%
+% Define the current pose for the robot [x y theta]
+robotCurrentPose = [robotCurrentLocation initialOrientation];
+
+%% Initialize the Robot Simulator
+robotRadius = 0.4;
+robot = ExampleHelperRobotSimulator('emptyMap',2);
+robot.enableLaser(false);
+robot.setRobotSize(robotRadius);
+robot.showTrajectory(true);
+robot.setRobotPose(robotCurrentPose);
+
+%% Define the Path Following Controller
+controller = robotics.PurePursuit;
+
+%%
+controller.Waypoints = path;
+
+% Set the path following controller parameters.
+controller.DesiredLinearVelocity = 0.1;
+
+%%
+controller.MaxAngularVelocity = 0.5;
+
+%%
+controller.LookaheadDistance = 0.4;
+
+%% Using the Path Following Controller, Drive the Robot over the Desired Waypoints
+goalRadius = 0.1;
+distanceToGoal = norm(robotCurrentLocation - robotGoal);
+
+%%
+controlRate = robotics.Rate(10);
+
 i = 0;
 %% Localization Procedure
-while i < 100
+while( distanceToGoal > goalRadius )
     % Receive laser scan and odometry message.
     scanMsg = receive(laserSub);
     odompose = odomSub.LatestMessage;
@@ -176,28 +218,22 @@ while i < 100
     y = estimatedPose(2);
     theta = estimatedPose(3);  % In radians!
 
-    % Calculate the distance to the current waypoint
-    dist = sqrt((x - waypoints(widx, 1))^2 + (y - waypoints(widx, 2))^2);
+    % Compute the controller outputs, i.e., the inputs to the robot
+    [v, omega] = controller(estimatedPose);
+    % Simulate the robot using the controller outputs.
+    drive(robot, v, omega);
+    % Extract current location information ([X,Y]) from the current pose of the
+    % robot
+    robotCurrentPose = estimatedPose;
+    % Re-compute the distance to the goal
+    distanceToGoal = norm(robotCurrentPose(1:2) - robotGoal);
+    waitfor(controlRate);
 
-    % Evaluate what to do next based on the distance to the waypoint.
-    if (dist <= distThreshold)
-        if (widx < size(waypoints, 1))
-            widx = widx + 1;
-        else
-            break;
-        end
-    else
-        err_x = waypoints(widx, 1) - x;
-        err_y = waypoints(widx, 2) - y;
-        err_theta = waypoints(widx, 3) - theta;
-        % Cinematica inversa
-        [linvel, angvel] = fuzzy_controller(err_x, err_y, err_theta);
-        % Populate the twist message
-        velMsg.Linear.X = linvel;
-        velMsg.Angular.Z = angvel;
-        % Publish
-        send(velPub,velMsg);
-    end
+    % Populate the twist message
+    velMsg.Linear.X = v;
+    velMsg.Angular.Z = omega;
+    % Publish
+    send(velPub,velMsg);
 
     % Plot the robot's estimated pose, particles and laser scans on the map.
     if isUpdated
@@ -208,6 +244,7 @@ while i < 100
 end
 
 disp('Finalizando!')
+delete(robot)
 velMsg.Linear.X = 0;
 velMsg.Angular.Z = 0;
 send(velPub,velMsg);
