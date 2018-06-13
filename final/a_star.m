@@ -16,16 +16,16 @@ function path_nodes = a_star(start_node, goal_node, gridSize)
    % Valor 'infinito'
    INF = 100000;
    % Limites do grid de celulas
-   grid_x = [0 gridSize(1)];
-   grid_y = [0 gridSize(2)];
-
-   closed_set = [];
-   open_set = [start_node];
-   path_nodes = [];
+   grid_x = [0 gridSize(1)-1];
+   grid_y = [0 gridSize(2)-1];
 
    start_node.camefrom = [];
    start_node.g = 0;
    start_node.f = start_node.g + manhattan_distance(start_node, goal_node);
+
+   closed_set = [];
+   open_set = [start_node];
+   path_nodes = [];
 
    while ~isempty(open_set)
 
@@ -58,7 +58,7 @@ function path_nodes = a_star(start_node, goal_node, gridSize)
          % se estiver pula essa iteracao, no ja foi avaliado
          is_in_closed_set = 0;
          for i = closed_set
-            if isequaln(neighbor, i)
+            if (neighbor.x == i.x && neighbor.y == i.y)
                is_in_closed_set = 1;
             end
          end
@@ -70,11 +70,13 @@ function path_nodes = a_star(start_node, goal_node, gridSize)
          % se nao estiver, o adiciona na lista aberta
          is_in_open_set = 0;
          for i = open_set
-            if isequaln(neighbor, i)
+            if (neighbor.x == i.x && neighbor.y == i.y)
                is_in_open_set = 1;
             end
          end
          if ~is_in_open_set
+            neighbor.g = current_node.g + 1;
+            neighbor.f = current_node.g + manhattan_distance(current_node, goal_node);
             open_set = [open_set neighbor];
          end
 
@@ -85,7 +87,6 @@ function path_nodes = a_star(start_node, goal_node, gridSize)
          if tentative_g < neighbor.g
             neighbor.camefrom = current_node;
             neighbor.g = tentative_g;
-            neighbor.f = neighbor.g + manhattan_distance(current_node, goal_node);
          end
 
       end  % for neighbor = neighbor_nodes
