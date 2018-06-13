@@ -2,7 +2,7 @@
 % This example shows how to convert an image to a binary occupancy grid for
 % using with the Robotics System Toolbox(R)
 
-function map = createOccupancyGrid (image_filename)
+function map = createOccupancyGrid (image_filename, resolution)
 
   % Import Image
   image = imread(image_filename);
@@ -13,6 +13,6 @@ function map = createOccupancyGrid (image_filename)
   bwimage = grayimage < 0.5;
 
   % Use black and white image as matrix input for binary occupancy grid
-  map = robotics.BinaryOccupancyGrid(bwimage, 2);
+  map = robotics.BinaryOccupancyGrid(bwimage, resolution);
 
 end

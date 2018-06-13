@@ -5,10 +5,10 @@ clear
 
 % Start and goal in meters
 start = [1 1];
-goal = [5 6];
+goal = [4 1];
 
 % Gera o Binary Occupancy Grid do espaco modelado do LaSER
-map = createOccupancyGrid ('laser2.png');
+map = createOccupancyGrid ('laser2.png', 2);
 % show(map);
 
 % Adjust start and goals to map resolution
@@ -27,10 +27,6 @@ waypoints = [waypoints tethas];
 widx = 2;
 % Set a distance metric for reaching a waypoint
 distThreshold = 0.3;
-
-% Cinematica inversa
-linvels = sqrt((diff(waypoints(:, 1))).^2 + (diff(waypoints(:, 2))).^2);
-angvels = diff(waypoints(:, 3));
 
 % Seta IP do ROS Master e inicia conexao
 ipaddress = '172.16.205.129';
@@ -70,9 +66,9 @@ laserSub = rossubscriber('scan');
 odomSub = rossubscriber('odom');
 
 % Create ROS publisher for sending out velocity commands to TurtleBot.
-[velPub,velMsg] = ...
-    rospublisher('/mobile_base/commands/velocity','geometry_msgs/Twist');
+velPub = rospublisher('/mobile_base/commands/velocity');
 pause(2); % Wait to ensure publisher and subscriber are registered
+velMsg = rosmessage(velPub);
 
 %% Initialize AMCL Algorithm
 amclMCLObj = robotics.algs.internal.MonteCarloLocalization.empty;
@@ -137,7 +133,7 @@ end
 
 i = 0;
 %% Localization Procedure
-while 1
+while i < 100
     % Receive laser scan and odometry message.
     scanMsg = receive(laserSub);
     odompose = odomSub.LatestMessage;
@@ -191,9 +187,14 @@ while 1
             break;
         end
     else
+        err_x = waypoints(widx, 1) - x;
+        err_y = waypoints(widx, 2) - y;
+        err_theta = waypoints(widx, 3) - theta;
+        % Cinematica inversa
+        [linvel, angvel] = fuzzy_controller(err_x, err_y, err_theta);
         % Populate the twist message
-        velMsg.Linear.X = linvels(widx-1);
-        velMsg.Angular.Z = angvels(widx-1);
+        velMsg.Linear.X = linvel;
+        velMsg.Angular.Z = angvel;
         % Publish
         send(velPub,velMsg);
     end
@@ -206,6 +207,7 @@ while 1
 
 end
 
+disp('Finalizando!')
 velMsg.Linear.X = 0;
 velMsg.Angular.Z = 0;
 send(velPub,velMsg);
